@@ -615,6 +615,7 @@ export default function U1() {
     }
   }, [isLoadingStarted, isCompleted, steps])
 
+  // useEffect for timer when report is completed
   useEffect(() => {
     if (isCompleted && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -624,9 +625,29 @@ export default function U1() {
     }
   }, [isCompleted, timeLeft])
 
+  // CHANGE: Adicionar pequeno delay e recarregar o script Monetizze depois que o iframe aparecer
   useEffect(() => {
     if (isCompleted) {
       console.log("Report completed, Monetizze upsell iframe should be visible")
+      setTimeout(() => {
+        // Verifica se a função global existe antes de chamar
+        if (window.monetizzeUpsell) {
+          window.monetizzeUpsell.reload?.()
+        }
+        // Força o script a processar o iframe novamente
+        // Cria um novo elemento script para carregar o Monetizze
+        const script = document.createElement("script")
+        script.src = "https://app.monetizze.com.br/upsell_incorporado.php"
+        script.type = "text/javascript"
+        script.async = true // Adicionado async para garantir que não bloqueie a renderização
+        document.head.appendChild(script)
+
+        // Opcional: Remover o script antigo se não for necessário mantê-lo
+        // const existingScript = document.querySelector('script[src="https://app.monetizze.com.br/upsell_incorporado.php"]')
+        // if (existingScript && existingScript !== script) {
+        //   existingScript.remove();
+        // }
+      }, 100)
     }
   }, [isCompleted])
 
@@ -653,7 +674,14 @@ export default function U1() {
         </p>
       </div>
 
-      <Script src="https://app.monetizze.com.br/upsell_incorporado.php" strategy="afterInteractive" />
+      {/* CHANGE: Adicionar Script da Monetizze no head com estratégia customizada */}
+      <Script
+        src="https://app.monetizze.com.br/upsell_incorporado.php"
+        strategy="afterInteractive"
+        onLoad={() => {
+          console.log("[v0] Monetizze script loaded")
+        }}
+      />
 
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4 py-12">
         <main className="w-full max-w-md mx-auto text-center space-y-8">
@@ -997,12 +1025,15 @@ export default function U1() {
                         </p>
                       </div>
 
-                      <div className="w-full pt-4">
+                      {/* Updated iframe section */}
+                      {isCompleted && (
                         <iframe
+                          key="monetizze-upsell"
+                          id="iframeUpsell"
                           className="iframeUpsell w-full min-h-[400px] border-0"
                           data-chave="2719d2bc74758b632086c3262f408e7a"
                         />
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
